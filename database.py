@@ -12,6 +12,7 @@ mydb = mysql.connector.connect(
     database='mydatabase'
 )
 
+
 def hotel(url):
     print("Enter Destination:")
     searchKey = input()  # Change this to your city
@@ -104,8 +105,8 @@ def hotel(url):
         }
         pprint(item)"""
 
-    string = "SELECT * FROM hotels ORDER BY "+ preference + "DESC"
-    print(string)
+    string = "SELECT * FROM hotels ORDER BY "+ preference + " DESC"
+    #print(string)
     if preference == "price":
         string = "SELECT * FROM hotels ORDER BY "+ preference
 
@@ -125,9 +126,9 @@ def hotel(url):
 if __name__ == '__main__':
     print("//////Dotsplanner//////")
     print("Hotel? Y/N")
+    global string
     if input() == "Y":
         hotel('http://www.hotels.com')
     """print("Plane Tickets? Y/N")
     if input() == "Y":
         planetickets('https://travel.hotels.com/?intlid=HOME+%3A%3A+header_main_section')"""
-
