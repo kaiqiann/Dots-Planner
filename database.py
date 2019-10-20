@@ -12,13 +12,19 @@ mydb = mysql.connector.connect(
     database='mydatabase'
 )
 
-def parse(url):
+def hotel(url):
     print("Enter Destination:")
     searchKey = input()  # Change this to your city
     print("Enter Check In Date: (Format month/day/year)")
     checkInDate =  input() # Format %d/%m/%Y
     print("Enter Check out Date: (Format month/day/year)")
     checkOutDate = input()  # Format %d/%m/%Y
+    print("Enter your Preference:\n"
+          "1. low price,\n"
+          "2. close to city center\n"
+          "3. parking lot available\n"
+          "4. High rating \n")
+    preference = input()
     response = webdriver.Chrome()
     response.get(url)
     searchKeyElement = response.find_elements_by_xpath('//input[contains(@id,"destination")]')
@@ -34,16 +40,16 @@ def parse(url):
         randomClick = response.find_elements_by_xpath('//h1')
         if randomClick:
             randomClick[0].click()
-        sleep(2)
+        sleep(1)
         submitButton[0].click()
-        sleep(5)
+        sleep(1)
         dropDownButton = response.find_elements_by_xpath('//fieldset[contains(@id,"dropdown")]')
         if dropDownButton:
             dropDownButton[0].click()
             priceLowtoHigh = response.find_elements_by_xpath('//li[contains(text(),"low to high")]')
             if priceLowtoHigh:
                 priceLowtoHigh[0].click()
-                sleep(5)
+                sleep(1)
 
     mycursor = mydb.cursor()
     mycursor.execute("""truncate table hotels""")#clean table
@@ -97,7 +103,16 @@ def parse(url):
             "rating": rating,
         }
         pprint(item)"""
-    mycursor.execute("SELECT * FROM hotels ORDER BY rating DESC , price")
+    mycursor.execute("SELECT * FROM hotels ORDER BY price")# default price is the preference
+    if preference is 1:
+        mycursor.execute("SELECT * FROM hotels ORDER BY price")
+    elif preference is 2:
+        mycursor.execute("SELECT * FROM hotels ORDER BY location")
+    elif preference is 3:
+        mycursor.execute("SELECT * FROM hotels ORDER BY parking DESC ")
+    elif preference is 4:
+        mycursor.execute("SELECT * FROM hotels ORDER BY rating DESC ")
+
     p = 0
     for x in mycursor.fetchall():
         if p == 0:
@@ -106,5 +121,11 @@ def parse(url):
 
 
 if __name__ == '__main__':
-    parse('http://www.hotels.com')
+    print("//////Dotsplanner//////")
+    print("Hotel? Y/N")
+    if input() == "Y":
+        hotel('http://www.hotels.com')
+    """print("Plane Tickets? Y/N")
+    if input() == "Y":
+        planetickets('https://travel.hotels.com/?intlid=HOME+%3A%3A+header_main_section')"""
 
