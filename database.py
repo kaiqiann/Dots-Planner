@@ -20,10 +20,10 @@ def hotel(url):
     print("Enter Check out Date: (Format month/day/year)")
     checkOutDate = input()  # Format %d/%m/%Y
     print("Enter your Preference:\n"
-          "1. low price,\n"
-          "2. close to city center\n"
-          "3. parking lot available\n"
-          "4. High rating \n")
+          "'price' -- low price,\n"
+          "'location' -- close to city center\n"
+          "'parking' -- parking lot available\n"
+          "'rating' -- High rating \n")
     preference = input()
     response = webdriver.Chrome()
     response.get(url)
@@ -88,9 +88,9 @@ def hotel(url):
         parking = hotel.xpath('.//li[@class="hmvt8258-amenity parkingOptions"]/li')
         #parking = parking[0].text_content() if parking else None
         if parking is not None:
-            parking = 1
-        else:
             parking = 0
+        else:
+            parking = 1
         #print(parking)
 
         sql = "INSERT INTO hotels (hotelname, price, rating, location, parking, link) VALUES (%s,%s,%s,%s,%s,%s)"
@@ -103,21 +103,23 @@ def hotel(url):
             "rating": rating,
         }
         pprint(item)"""
-    mycursor.execute("SELECT * FROM hotels ORDER BY price")# default price is the preference
-    if preference is 1:
-        mycursor.execute("SELECT * FROM hotels ORDER BY price")
-    elif preference is 2:
-        mycursor.execute("SELECT * FROM hotels ORDER BY location")
-    elif preference is 3:
-        mycursor.execute("SELECT * FROM hotels ORDER BY parking DESC ")
-    elif preference is 4:
-        mycursor.execute("SELECT * FROM hotels ORDER BY rating DESC ")
 
+    string = "SELECT * FROM hotels ORDER BY "+ preference + "DESC"
+    print(string)
+    if preference == "price":
+        string = "SELECT * FROM hotels ORDER BY "+ preference
+
+    mycursor.execute(string)  # default price is the preference
     p = 0
+    po = ""
     for x in mycursor.fetchall():
         if p == 0:
-            print(x[6])
+            po = x[6]
         p = 1
+        print(x)
+
+    print("\n\n Closest to your preference:")
+    print(po)
 
 
 if __name__ == '__main__':
