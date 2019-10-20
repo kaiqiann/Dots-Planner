@@ -13,9 +13,12 @@ mydb = mysql.connector.connect(
 )
 
 def parse(url):
-    searchKey = "Boston"  # Change this to your city
-    checkInDate = '10/19'  # Format %d/%m/%Y
-    checkOutDate = '10/20'  # Format %d/%m/%Y
+    print("Enter Destination:")
+    searchKey = input()  # Change this to your city
+    print("Enter Check In Date: (Format month/day/year)")
+    checkInDate =  input() # Format %d/%m/%Y
+    print("Enter Check out Date: (Format month/day/year)")
+    checkOutDate = input()  # Format %d/%m/%Y
     response = webdriver.Chrome()
     response.get(url)
     searchKeyElement = response.find_elements_by_xpath('//input[contains(@id,"destination")]')
@@ -31,24 +34,27 @@ def parse(url):
         randomClick = response.find_elements_by_xpath('//h1')
         if randomClick:
             randomClick[0].click()
+        sleep(2)
         submitButton[0].click()
-        sleep(15)
+        sleep(5)
         dropDownButton = response.find_elements_by_xpath('//fieldset[contains(@id,"dropdown")]')
         if dropDownButton:
             dropDownButton[0].click()
             priceLowtoHigh = response.find_elements_by_xpath('//li[contains(text(),"low to high")]')
             if priceLowtoHigh:
                 priceLowtoHigh[0].click()
-                sleep(10)
+                sleep(5)
 
     mycursor = mydb.cursor()
     mycursor.execute("""truncate table hotels""")#clean table
     mydb.commit()
     parser = html.fromstring(response.page_source, response.current_url)
     hotels = parser.xpath('.//section[@class="hotel-wrap"]')
-    for hotel in hotels[:10]:  # Replace 5 with 1 to just get the cheapest hotel
+    temp1 = 'http://www.hotels.com'
+    for hotel in hotels[:10]:  # Replace 10 with 1 to just get the cheapest hotel
         hotelName = hotel.xpath('.//h3[@class="p-name"]/a')
         hotelName = hotelName[0].text_content() if hotelName else None
+        #hotel prices
         price = hotel.xpath('.//div[@class="price"]/a//ins')
         price = price[0].text_content().replace(",", "").strip() if price else None
         if price == None:
@@ -56,12 +62,34 @@ def parse(url):
             price = price[0].text_content().replace(",", "").strip() if price else None
         price = findall('([\d\.]+)', price) if price else None
         price = price[0] if price else None
+        #hotel rates
         rating = hotel.xpath('.//div[@class="reviews-box resp-module"]')
-        rating = rating[0].text_content()
+        rating = rating[0].text_content() if rating else None
         rating = findall('([\d.]+)', rating)[0]
-        sql = "INSERT INTO hotels (hotelname,price,rating) VALUES (%s,%s,%s)"
-        val = (hotelName,price,rating)
-        mycursor.execute(sql,val)
+
+        #distance to city center
+        location = hotel.xpath('.//ul[@class="property-landmarks"]/li')
+        location = location[0].text_content() if location else None
+        location = findall('([\d.]+)', location)[0]
+        #print(location)
+
+        #url link
+        temp = hotel.xpath('.//a[@class="cta"]')
+        if temp:
+            propertynl = temp[0].attrib['href'] if temp else None
+            propertynl = temp1 + propertynl
+        #parking
+        parking = hotel.xpath('.//li[@class="hmvt8258-amenity parkingOptions"]/li')
+        #parking = parking[0].text_content() if parking else None
+        if parking is not None:
+            parking = 1
+        else:
+            parking = 0
+        #print(parking)
+
+        sql = "INSERT INTO hotels (hotelname, price, rating, location, parking, link) VALUES (%s,%s,%s,%s,%s,%s)"
+        val = (hotelName, price, rating, location, parking, propertynl)
+        mycursor.execute(sql, val)
         mydb.commit()
         """item = {
             "hotelName": hotelName,
@@ -70,9 +98,11 @@ def parse(url):
         }
         pprint(item)"""
     mycursor.execute("SELECT * FROM hotels ORDER BY rating DESC , price")
+    p = 0
     for x in mycursor.fetchall():
-        print(x)
-
+        if p == 0:
+            print(x[6])
+        p = 1
 
 
 if __name__ == '__main__':
